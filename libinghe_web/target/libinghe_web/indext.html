@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<link rel="stylesheet" href="layui/css/layui.css">
+<script src="layui/layui.js"></script>
+<script src="js/jquery-1.8.3.js"></script>
+<body>
+<table class="layui-hide" id="demo" lay-filter="test" ></table>
+
+
+<!--表头-->
+<script type="text/html" id="toolbarDemo">
+
+    <div class="layui-btn-container ">
+      <a href="add.html" ><button class="layui-btn layui-btn-sm" >添加</button></a>
+        <button class="layui-btn layui-btn-sm" lay-event="del">批量删除</button>
+        <button class="layui-btn layui-btn-sm" lay-event="addFiles">添加歌曲</button>
+    </div>
+
+<!--    <div class="demoTable">-->
+<!--        搜索ID：-->
+<!--        <div class="layui-inline">-->
+<!--            <input class="layui-input" name="typeid" id="typeid" autocomplete="off">-->
+<!--        </div>-->
+<!--        <button class="layui-btn" data-type="reload" lay-submit  lay-filter="type_nameSearch" >搜索</button>-->
+<!--    </div>-->
+    <form class="layui-form" id="showTypename">
+        <div class="layui-input-block">
+            <select name="tid" id="tid"  lay-filter="typenameFilter">
+
+                <option value=""></option>
+<!--                <option value="1">java</option>-->
+<!--                <option value="2">python</option>-->
+<!--                <option value="3">面试</option>-->
+
+            </select>
+            <button class="layui-btn" data-type="reload"  lay-submit  lay-filter="type_nameSearch" >搜索</button>
+        </div>
+
+    </form>
+
+</script>
+
+<form class="layui-form" id="popUpdateTest" style="display: none">
+    <input type="hidden" name="id" id="id">
+    <div class="layui-form-item">
+        <label class="layui-form-label">文件名</label>
+        <div class="layui-input-block">
+            <input type="text" id="file_name" name="file_name" required  lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">摘要</label>
+        <div class="layui-input-block">
+            <input type="text" id="content" name="content" required  lay-verify="required" placeholder="请输入内容" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label" >文本类型</label>
+        <div class="layui-input-block">
+            <select id="type_id" name="type_id" lay-verify="required">
+
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">上传人</label>
+        <div class="layui-input-block">
+            <input type="text" id="upload_name" name="upload_name" required  lay-verify="required" placeholder="请输入姓名" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+<!--        <div class="layui-form-item">-->
+<!--            <label class="layui-form-label">上传时间</label>-->
+<!--            <div class="layui-input-block">-->
+<!--                <input type="date" id="upload_date" name="upload_date"   placeholder="yyyy-MM-dd"  class="layui-input">-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    <div class="layui-form-item">-->
+<!--    <div class="layui-input-block">-->
+<!--        <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>-->
+<!--        &lt;!&ndash;            <button type="button" class="layui-btn"><a href="indext.html">返回</a></button>&ndash;&gt;-->
+<!--        <a href="indext.html" class="layui-btn" target="_blank">返回</a>-->
+<!--    </div>-->
+<!--</div>-->
+</form>
+
+</body>
+<!-- 如下script可以定义在页面的任何位置 -->
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+    layui.use(['table','form'], function(){
+        var table = layui.table;
+        var form=layui.form;
+        // var $=layui.$;
+        // var layer=layui.layer;
+        $(function(){
+            showTypeNames();
+        });
+        var render=table.render({
+            elem: '#demo'
+            ,height:450
+            ,toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模
+            ,url: 'file/findAll' //数据接口
+            ,page:true
+            ,cols: [[ //表头
+                {type:'checkbox', fixed: 'left'}
+                ,{field: 'id', title: 'ID', sort: true}
+                ,{field: 'file_name', title: '文件名'}
+                ,{field: 'content', title: '摘要'}
+                ,{field: 'upload_name', title: '上传人'}
+                ,{field: 'upload_date', title: '上传时间'}
+                ,{templet: '<div>{{d.type.type_name}}</div>', title: '类型'}
+                ,{fixed: 'right',title: '操作', toolbar: '#barDemo'}
+            ]]
+        });
+
+        //批量删除
+        table.on('toolbar(test)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+             var data=checkStatus.data;
+            if(checkStatus==null){
+                layer.confirm("请选择要删除的行！！")
+            }else if(obj.event=== 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    layer.close(index);
+                    var dataid="";
+                    for(var i=0;i<data.length;i++){
+                        dataid+=data[i].id+',';
+                    }
+                    $.ajax({
+                        url:'file/deleteById?',
+                        method:'post',
+                        data:{id:dataid},
+                        success:function(res){
+                            //删除后刷新
+                            render.reload();
+                            alert("删除成功")
+                        },
+                        error:function (res) {
+                            alert("删除失败！！")
+
+                        }
+                    });
+                });
+            }
+        });
+
+        //单个删除
+        //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+        table.on('tool(test)', function(obj){
+            var data = obj.data; //获得当前行数据
+            console.log(data.file_name);
+            //获得 lay-event 对应的值（也可以是表头的 e;vent 参数对应的值）
+            if(obj.event === 'del'){ //删除
+                console.log(data.id);
+                layer.confirm('真的删除行么', function(index){
+                    // 向服务端发送删除请求
+                    // 此处可以发送ajax
+                    obj.del();
+                    layer.close(index);
+                    $.ajax({
+                                url:'file/deleteById?',
+                                method:'post',
+                                data:{id:data.id},
+                                success:function(res) {
+                                    alert("删除成功");
+                                },
+                                error:function (e) {
+                                    alert("删除失败");
+                                 },
+                    });
+                });
+            } else if(obj.event === 'edit'){ //编辑
+                showFile(data);
+
+            }
+        });
+
+        //头工具栏事件就一个添加功能
+        table.on('toolbar(test)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch(obj.event){
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    layer.alert(JSON.stringify(data));
+                    break;
+                case 'getCheckLength':
+                    var data = checkStatus.data;
+                    layer.msg('选中了：'+ data.length + ' 个');
+                    break;
+                case 'addFiles':
+                    addFiles();
+                    break;
+                //自定义头工具栏右侧图标 - 提示
+                case 'LAYTABLE_TIPS':
+                    layer.alert('这是工具栏右侧自定义的一个图标按钮');
+                    break;
+            }
+        });
+         //数据的重载
+        form.on('submit(type_nameSearch)',function (data) {
+            // $.ajax({
+            //     url: 'type/findAll',
+            //     dataType: 'json',
+            //     type: 'post',
+            //     success: function (data) {
+            //         for (var i = 0; i <data.length ; i++) {
+            //             $("#tid").append('<option value="' + data[i].id + '">' + data[i].type_name + '</option>');
+            //         }
+            //         layer.reload();
+            //         layui.form.render("select");//重新渲染 固定写法
+            //     }
+            // });
+            //获取类型id
+            var typeid = data.field.tid;
+            alert(typeid);
+            //判断所选类型是否为空，为空查询所有
+            if(typeid==""){
+                table.reload('demo',{
+                    page:{curr:1},
+                    where:{type_id:typeid},
+                    method:'post',
+                    url:'file/findAll'
+                });
+            //不为空时通过类型Id查询该类型
+            }else{
+                table.reload('demo',{
+                    page:{curr:1},
+                    where:{type_id:typeid},
+                    method:'post',
+                    url:'file/findById'
+                });
+                return false;
+            }
+        });
+
+
+
+
+
+
+    });
+
+
+
+
+
+</script>
+<!--添加和修改-->
+<script>
+    var typename=null;
+    //页面加载时触发
+    $(function () {
+        $.ajax({
+            url:'type/findAll',
+            type:'post',
+            success:function(backdata){
+                JSON.stringify(backdata);
+                typename  = backdata;
+            }
+        });
+
+    });
+        <!--文件添加-->
+    function addFiles(){
+            layer.open({
+                type: 1,
+                content: $('#popUpdateTest'),
+                title: '添加歌曲',
+                area: ['500px', '500px'],
+                btn: ['提交', '取消'], //可以写多个按钮
+                success: function () {//弹出层打开后的回调函数,数据回显
+                    $("#type_id").empty();
+                    for (var i = 0; i < typename.length; i++) {
+                        $("#type_id").append('<option value="' + typename[i].id + '">' + typename[i].type_name + '</option>');
+                    }
+                    layui.form.render();//后追加到页面的元素，layui不渲染，必须render
+                },
+                yes: function (index, layero) {
+                    $.ajax({
+                        url: 'file/fileAdd',
+                        data: $("#popUpdateTest").serialize(),
+                        method: 'post',
+                        success: function () {
+                            window.location.reload();//重新加载
+                        }
+                    })
+                }
+            })
+
+        }
+
+    <!--文件更新-->
+    function showFile(data){
+        console.log(data)
+        // console.log(.data)
+        layer.open({
+            type: 1,
+            content: $("#popUpdateTest"),
+            title: '修改文件信息',
+            area: ['500px', '500px'],
+            btn: ['提交', '取消'], //可以写多个按钮
+            success: function () {//弹出层打开后的回调函数,数据回显
+                $('#id').val(data.id);
+                $('#file_name').val(data.file_name);
+                $('#content').val(data.content);
+                $('#upload_name').val(data.upload_name);
+                $("#type_id").empty();
+                for (var i = 0; i < typename.length; i++) {
+                    if (typename[i].id==data.type_id) {
+                        $("#type_id").append('<option selected value="' + typename[i].id + '">' + typename[i].type_name + '</option>');
+                    }else{
+                        $("#type_id").append('<option value="' + typename[i].id + '">' + typename[i].type_name + '</option>');
+                    }
+                }
+                layui.form.render();//后追加到页面的元素，layui不渲染，必须render
+
+            },
+            yes: function (index, layero) {
+                $.ajax({
+                    url: 'file/fileUpdate',
+                    data: $("#popUpdateTest").serialize(),
+                    method: 'post',
+                    success: function () {
+                        window.location.reload();//重新加载
+                    }
+                })
+            }
+        });
+    }
+
+    <!--遍历类型加到下拉框-->
+
+</script>
+
+<script>
+    function showTypeNames(){
+        $(function(){
+            $.ajax({
+                url:'type/findAll',
+                type:'post',
+                success:function(data){
+                    for (var i = 0; i < data.length; i++) {
+                        $("#tid").append('<option value="' + data[i].id + '">' + data[i].type_name + '</option>');
+                    }
+                    layui.form.render();//重新渲染 固定写法
+                }
+            });
+        })
+    }
+</script>
+</html>

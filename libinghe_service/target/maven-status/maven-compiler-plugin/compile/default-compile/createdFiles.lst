@@ -1,0 +1,4 @@
+com\xiaohe\service\TypeService.class
+com\xiaohe\service\FileService.class
+com\xiaohe\service\impl\FileServiceImpl.class
+com\xiaohe\service\impl\TypeServiceImpl.class

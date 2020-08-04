@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="libinghe_web:war">
+    <output-path>$PROJECT_DIR$/libinghe_web/target</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <module>libinghe_web</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="archive" name="libinghe_web.war">
+      <element id="artifact" artifact-name="libinghe_web:war exploded" />
+    </root>
+  </artifact>
+</component>
